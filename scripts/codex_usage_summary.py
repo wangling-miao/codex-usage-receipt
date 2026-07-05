@@ -140,6 +140,21 @@ def reset_time(epoch_seconds: Any, local_tz: timezone) -> str | None:
         return None
 
 
+def limit_percent_fields(raw_used_percent: Any) -> dict[str, float | None]:
+    """Return display-ready limit percentages.
+
+    Codex's JSON field is named used_percent, but for this receipt workflow the
+    user-facing columns should treat that raw value as the remaining side of the
+    quota display. Keep raw_used_percent for auditability and expose swapped
+    used_percent/remaining_percent for renderers.
+    """
+
+    if raw_used_percent is None:
+        return {"raw_used_percent": None, "used_percent": None, "remaining_percent": None}
+    raw = float(raw_used_percent)
+    return {"raw_used_percent": raw, "used_percent": 100 - raw, "remaining_percent": raw}
+
+
 def scan_files(roots: list[SourceRoot]) -> list[dict[str, Any]]:
     files: list[dict[str, Any]] = []
     for root in roots:
@@ -296,22 +311,18 @@ def summarize(args: argparse.Namespace) -> dict[str, Any]:
         limits = latest_rate_limits["rate_limits"]
         primary = limits.get("primary") or {}
         secondary = limits.get("secondary") or {}
+        primary_percent = limit_percent_fields(primary.get("used_percent"))
+        secondary_percent = limit_percent_fields(secondary.get("used_percent"))
         rate_summary = {
             "captured_at": fmt_dt(latest_rate_limits["ts"]),
             "plan_type": limits.get("plan_type"),
             "primary": {
-                "used_percent": primary.get("used_percent"),
-                "remaining_percent": None
-                if primary.get("used_percent") is None
-                else 100 - float(primary.get("used_percent")),
+                **primary_percent,
                 "window_minutes": primary.get("window_minutes"),
                 "resets_at": reset_time(primary.get("resets_at"), local_tz),
             },
             "secondary": {
-                "used_percent": secondary.get("used_percent"),
-                "remaining_percent": None
-                if secondary.get("used_percent") is None
-                else 100 - float(secondary.get("used_percent")),
+                **secondary_percent,
                 "window_minutes": secondary.get("window_minutes"),
                 "resets_at": reset_time(secondary.get("resets_at"), local_tz),
             },

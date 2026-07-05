@@ -75,12 +75,20 @@ The script outputs:
 - `models[]`: per-model events, fresh input, cache-hit input, output, rates, and cost.
 - `total`: total token volumes, `input_plus_output_tokens`, cache hit ratio, cost components, and total cost.
 - `by_source`: Windows/WSL source coverage.
-- `rate_limits`: latest current Codex rate-limit snapshot, if present in logs.
+- `rate_limits`: latest current Codex rate-limit snapshot, if present in logs. It keeps `raw_used_percent` for auditability, while user-facing `used_percent` and `remaining_percent` are swapped to match the receipt display expected by the user.
 - `notes`: methodology warnings to carry into footnotes if useful.
 
 ## Receipt Layout
 
-For a polished PDF, use LaTeX when available. If another document format is requested, keep the same information hierarchy.
+For a polished PDF, generate LaTeX from the summary JSON with the bundled Python renderer, then compile it when LaTeX is available. Do not hand-write or manually fill the `.tex` file for routine receipts; generated TeX keeps the style and field mapping consistent.
+
+```powershell
+python scripts\render_latex_receipt.py `
+  work\codex-usage-summary.json `
+  --output outputs\codex-usage-receipt.tex
+```
+
+If another document format is requested, keep the same information hierarchy.
 
 If LaTeX is not installed or compilation fails for environment reasons, fall back gracefully instead of blocking the task:
 
@@ -114,7 +122,7 @@ Recommended one-page A4 structure:
    - cache creation subtotal, usually `$0.00`
    - total estimated cost
 5. Source coverage table: Windows vs WSL totals.
-6. Current Codex limit snapshot: primary and secondary used/remaining percentages, window length, reset time.
+6. Current Codex limit snapshot: primary and secondary used/remaining percentages, window length, reset time. Use the display-ready `used_percent` and `remaining_percent` fields from the summary JSON.
 7. Short footer: raw JSONL logs only; local estimate, not an official tax invoice.
 
 Use black, gray, rules, and tables. Avoid decorative color, hospital-report styling, or paragraph-heavy explanations.
@@ -178,5 +186,6 @@ Before finalizing:
 - Confirm every model with usage appears in the line-item table.
 - Confirm every priced model has rates shown in the report.
 - Confirm total cost equals the sum of model rows and cost components.
+- Confirm the `.tex` came from `render_latex_receipt.py`, not manual copy/paste, unless the user explicitly requested custom TeX.
 - Confirm the report does not cite CC Switch as a data source unless the user explicitly asked for CC Switch reconciliation.
 - If printed, confirm the queue clears or report the remaining job status.

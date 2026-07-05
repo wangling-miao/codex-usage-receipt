@@ -28,7 +28,8 @@
   - secondary window used / remaining
   - reset time
 - 内置价格表，也支持命令行覆盖价格。
-- 优先使用 LaTeX 生成漂亮的 PDF；如果没有 LaTeX，可以降级为 Python 纯文本收据。
+- 用 Python 从统计 JSON 自动生成 LaTeX，保证每次收据样式和字段映射一致。
+- 优先编译 LaTeX 生成漂亮的 PDF；如果没有 LaTeX，可以降级为 Python 纯文本收据。
 - 可以作为 Codex skill 使用，也可以直接运行脚本。
 
 ## 项目结构
@@ -39,6 +40,7 @@ codex-usage-receipt/
 ├── README.md
 ├── scripts/
 │   ├── codex_usage_summary.py
+│   ├── render_latex_receipt.py
 │   └── render_text_receipt.py
 └── evals/
     └── evals.json
@@ -46,6 +48,7 @@ codex-usage-receipt/
 
 `SKILL.md` 是给 Codex/Claude 使用的工作流说明。  
 `codex_usage_summary.py` 负责读取 JSONL 日志并输出结构化统计 JSON。  
+`render_latex_receipt.py` 负责把统计 JSON 自动填充到统一 LaTeX 收据模板。
 `render_text_receipt.py` 负责把统计 JSON 渲染为纯文本收据，作为没有 LaTeX 时的可靠 fallback。
 
 ## 安装为 Codex Skill
@@ -91,7 +94,17 @@ python scripts\codex_usage_summary.py `
   --output work\codex-usage-summary.json
 ```
 
-再生成纯文本收据：
+再生成 LaTeX 收据：
+
+```powershell
+python scripts\render_latex_receipt.py `
+  work\codex-usage-summary.json `
+  --output outputs\codex-usage-receipt.tex
+```
+
+如果机器安装了 TeX Live、Tectonic 或其它可用 LaTeX 工具，可以把 `.tex` 编译成 PDF。
+
+如果没有 LaTeX，再生成纯文本收据：
 
 ```powershell
 python scripts\render_text_receipt.py `
@@ -218,13 +231,13 @@ model=input,cache_hit,output,cache_creation
 - `models`：按模型拆分的 token 和成本。
 - `total`：总 token、总成本、缓存命中率和成本组件。
 - `by_source`：按日志来源拆分，例如 Windows 和 WSL。
-- `rate_limits`：从日志里读到的最新 Codex 限额快照。
+- `rate_limits`：从日志里读到的最新 Codex 限额快照。里面保留 `raw_used_percent` 便于审计；面向收据展示的 `used_percent` 和 `remaining_percent` 已按用户期望的展示口径交换。
 - `pricing`：本次计算使用的价格表。
 - `notes`：方法说明和注意事项。
 
 ## 没有 LaTeX 时怎么办
 
-LaTeX 只是生成漂亮 PDF 的首选，不是硬依赖。
+LaTeX 只是编译 PDF 的首选，不是硬依赖。即使没有 LaTeX，也可以先用 `render_latex_receipt.py` 生成 `.tex`，但无法在本机编译成 PDF。
 
 如果没有安装 TeX Live、Tectonic 或其它 LaTeX 工具，直接用纯文本 fallback：
 
@@ -295,13 +308,14 @@ Codex 可能在 Windows 和 WSL 中各自产生日志。只看 `%USERPROFILE%\.c
 语法检查：
 
 ```powershell
-python -m py_compile scripts\codex_usage_summary.py scripts\render_text_receipt.py
+python -m py_compile scripts\codex_usage_summary.py scripts\render_latex_receipt.py scripts\render_text_receipt.py
 ```
 
 查看命令帮助：
 
 ```powershell
 python scripts\codex_usage_summary.py --help
+python scripts\render_latex_receipt.py --help
 python scripts\render_text_receipt.py --help
 ```
 
@@ -316,3 +330,4 @@ evals/evals.json
 - 用户已给明确时间段时直接执行。
 - 用户未给时间段时先询问。
 - 没有 LaTeX 时 fallback 到纯文本。
+- LaTeX 报告必须由 Python 模板渲染器从 summary JSON 生成。
