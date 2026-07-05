@@ -1,0 +1,23 @@
+{
+  "skill_name": "codex-usage-receipt",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "使用打印机黑白打印 2026-05-23 以来的 Codex token 消费收据，Windows 和 WSL 都要算上，列出模型、价格、总成本和限额余量。",
+      "expected_output": "Restates the explicit period, scans raw Windows and WSL Codex JSONL logs, generates a receipt-style report with model line items and pricing, prints in black-and-white, and verifies the printer queue.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "帮我查一下 Codex token 消耗和费用，做成收据。",
+      "expected_output": "Before scanning or calculating, asks the user what time period should be counted.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "从 2026-06-01 到 2026-07-01 做一份 Codex token 费用报告；这台机器没有 LaTeX，就输出纯文本。",
+      "expected_output": "Uses the explicit date range, runs the raw-log summary, falls back to the Python/plain-text renderer instead of LaTeX, and includes model pricing, cost totals, source coverage, and quota snapshot if available.",
+      "files": []
+    }
+  ]
+}
