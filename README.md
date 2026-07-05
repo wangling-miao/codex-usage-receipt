@@ -50,11 +50,13 @@ codex-usage-receipt/
 
 ## 安装为 Codex Skill
 
+仓库地址：[wangling-miao/codex-usage-receipt](https://github.com/wangling-miao/codex-usage-receipt)
+
 把本仓库放到你的 Codex skills 目录下：
 
 ```powershell
 cd $env:USERPROFILE\.codex\skills
-git clone https://github.com/<owner>/codex-usage-receipt.git
+git clone https://github.com/wangling-miao/codex-usage-receipt.git
 ```
 
 目录名应保持为：
@@ -314,4 +316,3 @@ evals/evals.json
 - 用户已给明确时间段时直接执行。
 - 用户未给时间段时先询问。
 - 没有 LaTeX 时 fallback 到纯文本。
-
